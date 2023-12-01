@@ -1,53 +1,82 @@
-#[allow(unused_imports, dead_code)]
-use std::string;
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
+// use std::vec;
+
+const RAW_DATA: &str = include_str!("../../input/day_01.txt");
+
 fn main() {
     println!("Running Day 1");
-    part_1();
-}
-
-const DATA: &str = include_str!("../../input/day_01_sample.txt");
-
-#[allow(unused_variables, dead_code)]
-fn load_input() -> Vec<String> {
-    println!("Loading input");
-    let file_path = "./input/day_01_sample.txt";
-    print!("Loading file: {:?}", file_path);
-    let file = File::open(file_path).expect("File not found");
-    let reader = BufReader::new(file);
-    let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-    lines
+    // part_1();
+    part_2();
 }
 
 #[allow(unused_variables, dead_code)]
-fn part_1() -> i32 {
-    // let data = load_input();
-    let data = DATA.clone();
-    print!("data: {:?}", data);
+fn part_1() -> u32 {
+    println!("Part 1");
 
-    // Build blocks with iterators
-    // let blocks: Vec<Vec<i32>> = data
-    //     .trim()
-    //     .split("\n\n")
-    //     .map(|block| block.split("\n").map(|s| s.parse().unwrap()).collect())
-    //     .collect();
+    let data: Vec<&str> = RAW_DATA.lines().collect();
+    // println!("data: {:?}", data);
 
-    // Build blocks with loops
-    let mut blocks: Vec<Vec<i32>> = Vec::new();
-    let mut current_block = Vec::<i32>::new();
-    for line in data.lines() {
-        if line != "" {
-            current_block.push(line.parse().unwrap());
-        } else {
-            blocks.push(current_block);
-            current_block = Vec::<i32>::new();
+    let total = data
+        .iter()
+        .map(|line| get_first_last(line))
+        .reduce(|a, b| a + b)
+        .expect("Can't reduce");
+    println!("total: {:?}", total);
+    total
+}
+
+fn get_first_last(line: &str) -> u32 {
+    let mut number = String::new();
+    for char in line.chars() {
+        if char.is_digit(10) {
+            number.push(char);
+            break;
         }
     }
-    blocks.push(current_block);
+    for char in line.chars().rev() {
+        if char.is_digit(10) {
+            number.push(char);
+            break;
+        }
+    }
+    let value: u32 = number.parse().expect("can't parse to u32");
+    value
+}
 
-    println!("blocks: {:?}", blocks);
-    10
+#[allow(unused_variables, dead_code)]
+fn part_2() -> u32 {
+    println!("Part 2");
+
+    let data: Vec<&str> = RAW_DATA.lines().collect();
+    // println!("data: {:?}", data);
+
+    let values = data
+        .iter()
+        .map(|line| replace_numbers(line))
+        .collect::<Vec<String>>();
+    // println!("values: {:?}", values);
+
+    let numbers: Vec<u32> = values.iter().map(|line| get_first_last(line)).collect();
+    // println!("numbers: {:?}", numbers);
+
+    let total: u32 = numbers.iter().sum();
+    println!("total: {:?}", total);
+    total
+}
+
+fn replace_numbers(line: &str) -> String {
+    let mut number = String::new();
+    let numbers: Vec<&str> = vec![
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
+    for (char_id, char) in line.chars().enumerate() {
+        if char.is_digit(10) {
+            number.push(char);
+        }
+        for (i, pat) in numbers.iter().enumerate() {
+            if line[char_id..].starts_with(pat) {
+                number.push_str(format!("{}", i + 1).as_str());
+            };
+        }
+    }
+    number
 }
