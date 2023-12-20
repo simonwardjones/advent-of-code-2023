@@ -1,12 +1,21 @@
-use std::collections::HashMap;
-
+use lazy_static::lazy_static;
 use regex::Regex;
+use std::collections::HashMap;
 
 const RAW_DATA: &str = include_str!("../../input/day_19.txt");
 
 fn main() {
-    part_one();
-    part_two();
+    use std::time::Instant;
+    let now = Instant::now();
+
+    // Code block to measure.
+    {
+        part_one();
+        part_two();
+    }
+
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 }
 
 #[derive(Debug, Clone)]
@@ -39,8 +48,10 @@ impl From<&str> for XMASPart {
             a: 0,
             s: 0,
         };
-        let re = Regex::new(r"(\w+)=(\d+)").unwrap();
-        for capture in re.captures_iter(s) {
+        lazy_static! {
+            static ref XMAS_PART_RE: Regex = Regex::new(r"(\w+)=(\d+)").unwrap();
+        }
+        for capture in XMAS_PART_RE.captures_iter(s) {
             match capture.get(1).unwrap().as_str() {
                 "x" => xmas_part.x = capture.get(2).unwrap().as_str().parse::<i32>().unwrap(),
                 "m" => xmas_part.m = capture.get(2).unwrap().as_str().parse::<i32>().unwrap(),
@@ -137,15 +148,22 @@ impl Rule {
 
 impl From<&'static str> for Rule {
     fn from(s: &'static str) -> Self {
-        let re_simple = Regex::new(r"^\w+$").unwrap();
-        let re = Regex::new(r"(\w+?)?(>|<)?(\d+)?:?(\w+)").unwrap();
-        if let Some(c) = re_simple.captures(s) {
+        lazy_static! {
+            static ref RE_SIMPLE: Regex = Regex::new(r"^\w+$").unwrap();
+        }
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"(\w+?)?(>|<)?(\d+)?:?(\w+)").unwrap();
+        }
+        // super slow without lazy_static
+        // let RE: Regex = Regex::new(r"(\w+)(>|<)(\d+):(\w+)").unwrap();
+
+        if let Some(c) = RE_SIMPLE.captures(s) {
             return Rule {
                 rule_name: c.get(0).unwrap().as_str(),
                 condition: None,
             };
         }
-        match re.captures(s) {
+        match RE.captures(s) {
             Some(c) => {
                 let category = Category::from(c.get(1).unwrap().as_str());
                 let operator = Operator::from(c.get(2).unwrap().as_str());
@@ -210,8 +228,10 @@ impl WorkFlowEngine {
 
 impl From<&'static str> for WorkFlow {
     fn from(s: &'static str) -> Self {
-        let re = Regex::new(r"(\w+)\{(.*)\}").unwrap();
-        match re.captures(s) {
+        lazy_static! {
+            static ref WORKFLOW_RE: Regex = Regex::new(r"(\w+)\{(.*)\}").unwrap();
+        }
+        match WORKFLOW_RE.captures(s) {
             Some(c) => {
                 let name = c.get(1).unwrap().as_str();
                 let rules = c
@@ -238,6 +258,7 @@ fn load_data() -> (Vec<WorkFlow>, Vec<XMASPart>) {
 #[allow(dead_code, unused_variables)]
 fn part_one() {
     println!("Part 1");
+
     let (workflows, part_ratings) = load_data();
     let mut engine = WorkFlowEngine {
         workflows_by_name: workflows.into_iter().map(|w| (w.name, w)).collect(),
@@ -245,7 +266,7 @@ fn part_one() {
         accepted_parts: Vec::new(),
         parts: part_ratings,
     };
-    // println!("engine: {engine:?}");
+    println!("engine: {engine:?}");
     engine.process();
     // println!("engine: {engine:?}");
     let total = engine.accepted_parts.iter().map(|p| p.total()).sum::<i32>();

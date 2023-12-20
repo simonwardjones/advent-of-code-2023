@@ -72,7 +72,7 @@ fn get_valid_springs(springs: Vec<i32>, counts: &[i32]) -> i32 {
             // println!("Not enough space for hashes");
             continue;
         }
-        if counts.iter().sum::<i32>() > springs.len() as i32 - pos as i32 + r {
+        if counts.iter().sum::<i32>() > springs.len() as i32 - pos as i32 + current_run {
             // println!("Not enough space for counts");
             continue;
         }
